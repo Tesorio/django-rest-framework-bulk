@@ -9,7 +9,7 @@ DATABASES = {
     }
 }
 
-MIDDLEWARE_CLASSES = ()
+MIDDLEWARE = []
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -24,3 +24,6 @@ STATIC_URL = '/static/'
 SECRET_KEY = 'foo'
 
 ROOT_URLCONF = 'rest_framework_bulk.tests.simple_app.urls'
+
+# Silence auto-created primary key warnings in tests
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
