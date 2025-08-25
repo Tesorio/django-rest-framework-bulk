@@ -4,8 +4,7 @@ Django REST Framework Bulk
 .. image:: https://badge.fury.io/py/djangorestframework-bulk.png
     :target: http://badge.fury.io/py/djangorestframework-bulk
 
-.. image:: https://travis-ci.org/miki725/django-rest-framework-bulk.svg?branch=master
-    :target: https://travis-ci.org/miki725/django-rest-framework-bulk
+
 
 Django REST Framework bulk CRUD view mixins.
 
@@ -21,22 +20,20 @@ within the framework. That is the purpose of this project.
 Requirements
 ------------
 
-* Python>=2.7
-* Django>=1.3
-* Django REST Framework >= 3.0.0
-* REST Framework >= 2.2.5
-  (**only with** Django<1.8 since DRF<3 does not support Django1.8)
+* Python>=3.13
+* Django>=5.0
+* Django REST Framework >= 3.14
 
 Installing
 ----------
 
-Using pip::
+Using uv::
 
-    $ pip install djangorestframework-bulk
+    $ uv pip install djangorestframework-bulk
 
 or from source code::
 
-    $ pip install -e git+http://github.com/miki725/django-rest-framework-bulk#egg=djangorestframework-bulk
+    $ uv pip install -e git+https://github.com/miki725/django-rest-framework-bulk#egg=djangorestframework-bulk
 
 Example
 -------
