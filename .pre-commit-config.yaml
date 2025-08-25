@@ -1,0 +1,14 @@
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.12.10
+    hooks:
+      - id: ruff-format
+        name: ruff (format)
+      - id: ruff
+        name: ruff (lint)
+        args: ["--fix", "--exit-non-zero-on-fix"]
+        types_or: [python, pyi]
+        additional_dependencies: []
