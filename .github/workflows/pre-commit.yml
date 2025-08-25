@@ -1,0 +1,25 @@
+name: pre-commit
+
+on:
+  pull_request:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: astral-sh/setup-uv@v3
+      - name: Install dependencies
+        run: uv pip install -e .[dev]
+      - uses: trilom/file-changes-action@a6ca26c14274c33b15e6499323aac178af06ad4b # v1.2.4
+        id: file_changes
+        with:
+          output: ' '
+      - name: Run pre-commit on changed files
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
+        with:
+          extra_args: --files ${{ steps.file_changes.outputs.files}}
+
