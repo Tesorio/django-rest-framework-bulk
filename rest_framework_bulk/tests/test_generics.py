@@ -1,7 +1,7 @@
 from __future__ import unicode_literals, print_function
 import json
 
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.test import TestCase
 from django.test.client import RequestFactory
 from rest_framework import status
