@@ -13,7 +13,7 @@ jobs:
           python-version: "3.13"
       - uses: astral-sh/setup-uv@v3
       - name: Install dependencies
-        run: uv pip install -e .[dev]
+        run: uv sync --all-extras
       - uses: trilom/file-changes-action@a6ca26c14274c33b15e6499323aac178af06ad4b # v1.2.4
         id: file_changes
         with:
