@@ -20,7 +20,7 @@ class TestBulkAPIView(TestCase):
         """
         Test that GET request is successful on bulk view.
         """
-        response = self.view(self.request.get(''))
+        response = self.view(self.request.get('/'))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -29,7 +29,7 @@ class TestBulkAPIView(TestCase):
         Test that POST request with single resource only creates a single resource.
         """
         response = self.view(self.request.post(
-            '',
+            '/',
             json.dumps({'contents': 'hello world', 'number': 1}),
             content_type='application/json',
         ))
@@ -43,7 +43,7 @@ class TestBulkAPIView(TestCase):
         Test that POST request with multiple resources creates all posted resources.
         """
         response = self.view(self.request.post(
-            '',
+            '/',
             json.dumps([
                 {'contents': 'hello world', 'number': 1},
                 {'contents': 'hello mars', 'number': 2},
@@ -66,7 +66,7 @@ class TestBulkAPIView(TestCase):
         obj2 = SimpleModel.objects.create(contents='hello mars', number=2)
 
         response = self.view(self.request.put(
-            '',
+            '/',
             json.dumps([
                 {'contents': 'foo', 'number': 3, 'id': obj1.pk},
                 {'contents': 'bar', 'number': 4, 'id': obj2.pk},
@@ -89,7 +89,7 @@ class TestBulkAPIView(TestCase):
         Test that PUT request updates all submitted resources.
         """
         response = self.view(self.request.put(
-            '',
+            '/',
             json.dumps([
                 {'contents': 'foo', 'number': 3},
                 {'contents': 'rainbows', 'number': 4},  # multiple objects without id
@@ -108,7 +108,7 @@ class TestBulkAPIView(TestCase):
         obj2 = SimpleModel.objects.create(contents='hello mars', number=2)
 
         response = self.view(self.request.patch(
-            '',
+            '/',
             json.dumps([
                 {'contents': 'foo', 'id': obj1.pk},
                 {'contents': 'bar', 'id': obj2.pk},
@@ -133,7 +133,7 @@ class TestBulkAPIView(TestCase):
         SimpleModel.objects.create(contents='hello world', number=1)
         SimpleModel.objects.create(contents='hello mars', number=10)
 
-        response = self.view(self.request.delete(''))
+        response = self.view(self.request.delete('/'))
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -144,7 +144,7 @@ class TestBulkAPIView(TestCase):
         SimpleModel.objects.create(contents='hello world', number=1)
         SimpleModel.objects.create(contents='hello mars', number=10)
 
-        response = FilteredBulkAPIView.as_view()(self.request.delete(''))
+        response = FilteredBulkAPIView.as_view()(self.request.delete('/'))
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertEqual(SimpleModel.objects.count(), 1)
@@ -154,7 +154,7 @@ class TestBulkAPIView(TestCase):
         """
         Test that OPTIONS request is successful on bulk view.
         """
-        response = self.view(self.request.options(''))
+        response = self.view(self.request.options('/'))
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
