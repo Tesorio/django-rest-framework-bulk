@@ -1,6 +1,7 @@
 from __future__ import print_function, unicode_literals
 
 import inspect
+from collections import Counter
 
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ListSerializer
@@ -12,6 +13,23 @@ __all__ = [
 
 
 class BulkSerializerMixin(object):
+    def __init__(self, *args, **kwargs):
+        super(BulkSerializerMixin, self).__init__(*args, **kwargs)
+
+        # Only validate update_lookup_field for bulk update operations
+        view = self.context.get("view") if hasattr(self, "context") else None
+        request = getattr(view, "request", None) if view else None
+        method = getattr(request, "method", "") if request else ""
+
+        # Check if this is a bulk update scenario
+        if method in ("PUT", "PATCH") and isinstance(self.root, BulkListSerializer):
+            id_attr = getattr(self.Meta, "update_lookup_field", "id")
+            if id_attr not in self.fields:
+                raise ValueError(
+                    f"update_lookup_field '{id_attr}' is not present in serializer fields. "
+                    f"Available fields: {list(self.fields.keys())}"
+                )
+
     def to_internal_value(self, data):
         ret = super(BulkSerializerMixin, self).to_internal_value(data)
 
@@ -21,12 +39,10 @@ class BulkSerializerMixin(object):
         # add update_lookup_field field back to validated data
         # since super by default strips out read-only fields
         # hence id will no longer be present in validated_data
-        if all(
-            (isinstance(self.root, BulkListSerializer), id_attr, request_method in ("PUT", "PATCH"))
-        ):
+        if isinstance(self.root, BulkListSerializer) and request_method in ("PUT", "PATCH"):
+            # Field existence already validated in __init__ for update operations
             id_field = self.fields[id_attr]
             id_value = id_field.get_value(data)
-
             ret[id_attr] = id_value
 
         return ret
@@ -38,31 +54,37 @@ class BulkListSerializer(ListSerializer):
     def update(self, queryset, all_validated_data):
         id_attr = getattr(self.child.Meta, "update_lookup_field", "id")
 
-        all_validated_data_by_id = {i.pop(id_attr): i for i in all_validated_data}
+        # Extract and validate IDs in O(n)
+        try:
+            id_list = [item[id_attr] for item in all_validated_data]
+        except KeyError:
+            raise ValidationError(f"Missing required field '{id_attr}' in one or more items.")
 
-        if not all((bool(i) and not inspect.isclass(i) for i in all_validated_data_by_id.keys())):
-            raise ValidationError("")
+        # O(n) duplicate detection using Counter
+        duplicates = [k for k, v in Counter(id_list).items() if v > 1]
+        if duplicates:
+            raise ValidationError(f"Duplicate {id_attr} values found in request: {duplicates}")
 
-        # since this method is given a queryset which can have many
-        # model instances, first find all objects to update
-        # and only then update the models
-        objects_to_update = queryset.filter(
-            **{
-                "{}__in".format(id_attr): all_validated_data_by_id.keys(),
-            }
-        )
+        # Build data map by ID
+        data_by_id = {}
+        for item in all_validated_data:
+            key = item.pop(id_attr)
+            if not (bool(key) and not inspect.isclass(key)):
+                raise ValidationError(f"Invalid or missing {id_attr} values: [{key!r}]")
+            data_by_id[key] = item
 
-        if len(all_validated_data_by_id) != objects_to_update.count():
-            raise ValidationError("Could not find all objects to update.")
+        # Single query using in_bulk; supports non-PK lookup via field_name
+        obj_by_id = queryset.in_bulk(id_list, field_name=id_attr)
 
+        # Check for missing objects
+        missing = [i for i in id_list if i not in obj_by_id]
+        if missing:
+            raise ValidationError(f"Could not find objects with {id_attr} values: {missing}")
+
+        # Build response preserving input order
         updated_objects = []
-
-        for obj in objects_to_update:
-            obj_id = getattr(obj, id_attr)
-            obj_validated_data = all_validated_data_by_id.get(obj_id)
-
-            # use model serializer to actually update the model
-            # in case that method is overwritten
-            updated_objects.append(self.child.update(obj, obj_validated_data))
+        for obj_id in id_list:
+            obj = obj_by_id[obj_id]
+            updated_objects.append(self.child.update(obj, data_by_id[obj_id]))
 
         return updated_objects
